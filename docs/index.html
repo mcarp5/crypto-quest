@@ -12,7 +12,6 @@
 *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e7f7ff}
 html,body{height:100%;margin:0;background:linear-gradient(180deg,#071025 0%, #081424 60%)}
 .app{max-width:900px;margin:0 auto;padding:16px}
-header{display:flex;align-items:center;gap:12px}
 .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#8affd4);display:flex;align-items:center;justify-content:center;font-weight:800;color:#012;font-size:16px}
 h1{font-size:18px;margin:0}
 .btn{background:var(--accent);color:#021224;border:none;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:800}
@@ -40,7 +39,7 @@ h1{font-size:18px;margin:0}
   </div>
   <div class="card">
     <strong>Start</strong>
-    <div class="small-muted">Tap below to begin the meme-fueled journey. Slang included: HODL, rug pull, rekt, Lambo, whale, FUD, DYOR…</div>
+    <div class="small-muted">Tap below to begin the meme-fueled journey.</div>
     <div style="margin-top:10px"><button id="start" class="btn">Start World 1</button></div>
   </div>
   <div class="grid">
@@ -60,34 +59,76 @@ h1{font-size:18px;margin:0}
   <div id="alerts"></div>
   <div class="card small-muted">Install tip: Safari → Share → Add to Home Screen.</div>
 </div>
+
 <script>
-let deferredPrompt=null; const ib=document.getElementById('installBtn');
-window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; });
-ib.onclick=async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else alert('Use Safari Share → Add to Home Screen'); };
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
-const vocab=[
- {t:'HODL',d:'Hold through volatility (meme & mindset)'},
- {t:'Rug Pull',d:'Dev abandons project & drains liquidity — scam'},
- {t:'FUD',d:'Fear, Uncertainty, Doubt — negative hype'},
- {t:'Moon',d:'Price rockets up — “to the moon”'},
- {t:'Bagholder',d:'Left holding a plunging asset'},
- {t:'Whale',d:'Large holder with market impact'},
- {t:'DYOR',d:'Do Your Own Research'},
- {t:'Gas',d:'Network fee to process txs'},
- {t:'Smart Contract',d:'Self-executing code on-chain'},
- {t:'LP',d:'Liquidity Provider / LP token'}
-];
-const gloss=document.getElementById('gloss'); vocab.forEach(v=>{ const d=document.createElement('div'); d.className='term'; d.innerHTML='<strong>'+v.t+'</strong> — <span class=small>'+v.d+'</span>'; gloss.appendChild(d) });
-let state=JSON.parse(localStorage.getItem('cq_mobile_state')||'{}'); if(!state.xp) state.xp=0; save();
-document.getElementById('start').onclick=()=>startWorld1();
-document.getElementById('mk').onclick=()=>{ const n=document.getElementById('wname').value||'MyHotWallet'; const ws=JSON.parse(localStorage.getItem('cq_wallets_mobile')||'[]'); ws.push({name:n}); localStorage.setItem('cq_wallets_mobile', JSON.stringify(ws)); renderWallets(); alertx('Wallet created (sim)'); };
-renderWallets();
-function renderWallets(){ const w=document.getElementById('wlist'); const ws=JSON.parse(localStorage.getItem('cq_wallets_mobile')||'[]'); w.innerHTML=''; ws.forEach(x=>{ const d=document.createElement('div'); d.className='term'; d.innerHTML='<strong>'+x.name+'</strong> <button class="btn small" onclick="send(\''+x.name+'\')">Send</button>'; w.appendChild(d) }) }
-window.send=(name)=>{ alertx('Simulated send from '+name+' — confirmed +5 XP'); earn(5); };
-function startWorld1(){ const g=document.getElementById('game'); g.innerHTML=''; const d=document.createElement('div'); d.className='term'; d.innerHTML='<strong>World 1: Crypto Origins</strong><div class=small>Drag eras into order: Barter → Gold → Fiat → Digital → Bitcoin</div><button class="btn small" onclick="earn(30)">Check Order</button>'; g.appendChild(d); }
-function earn(x){ state.xp+=x; save(); alertx('Earned '+x+' XP'); }
-function save(){ localStorage.setItem('cq_mobile_state', JSON.stringify(state)); }
-function alertx(msg){ const a=document.getElementById('alerts'); const d=document.createElement('div'); d.className='alert'; d.innerText=msg; a.prepend(d); setTimeout(()=>d.remove(),4000); }
+console.log('[CryptoQuest] script loaded');
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[CryptoQuest] DOMContentLoaded');
+  let deferredPrompt=null; const ib=document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; });
+  ib.addEventListener('click', async ()=>{
+    if(deferredPrompt){ await deferredPrompt.prompt(); deferredPrompt=null; }
+    else alert('Use Safari Share → Add to Home Screen');
+  });
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then(()=>console.log('[CryptoQuest] SW registered')).catch(e=>console.warn('SW error', e));
+  }
+  const vocab=[
+   {t:'HODL',d:'Hold through volatility (meme & mindset)'},
+   {t:'Rug Pull',d:'Dev abandons project & drains liquidity — scam'},
+   {t:'FUD',d:'Fear, Uncertainty, Doubt — negative hype'},
+   {t:'Moon',d:'Price rockets up — “to the moon”'},
+   {t:'Bagholder',d:'Left holding a plunging asset'},
+   {t:'Whale',d:'Large holder with market impact'},
+   {t:'DYOR',d:'Do Your Own Research'},
+   {t:'Gas',d:'Network fee to process txs'},
+   {t:'Smart Contract',d:'Self-executing code on-chain'},
+   {t:'LP',d:'Liquidity Provider / LP token'}
+  ];
+  const gloss=document.getElementById('gloss');
+  vocab.forEach(v=>{ const d=document.createElement('div'); d.className='term'; d.innerHTML='<strong>'+v.t+'</strong> — <span class=small>'+v.d+'</span>'; gloss.appendChild(d) });
+  let state=JSON.parse(localStorage.getItem('cq_mobile_state')||'{}'); if(!state.xp) state.xp=0; save();
+  function save(){ localStorage.setItem('cq_mobile_state', JSON.stringify(state)); }
+  function earn(x){ state.xp+=x; save(); alertx('Earned '+x+' XP'); }
+  function alertx(msg){ const a=document.getElementById('alerts'); const d=document.createElement('div'); d.className='alert'; d.innerText=msg; a.prepend(d); setTimeout(()=>d.remove(),4000); }
+  const startBtn = document.getElementById('start');
+  if(startBtn){
+    startBtn.addEventListener('click', () => {
+      console.log('[CryptoQuest] Start clicked');
+      startWorld1();
+    });
+  } else {
+    console.warn('[CryptoQuest] Start button not found');
+  }
+  document.getElementById('mk').addEventListener('click', () => {
+    const n=document.getElementById('wname').value||'MyHotWallet';
+    const ws=JSON.parse(localStorage.getItem('cq_wallets_mobile')||'[]');
+    ws.push({name:n});
+    localStorage.setItem('cq_wallets_mobile', JSON.stringify(ws));
+    renderWallets();
+    alertx('Wallet created (sim)');
+  });
+  function renderWallets(){
+    const w=document.getElementById('wlist'); const ws=JSON.parse(localStorage.getItem('cq_wallets_mobile')||'[]');
+    w.innerHTML='';
+    ws.forEach(x=>{
+      const d=document.createElement('div'); d.className='term';
+      d.innerHTML='<strong>'+x.name+'</strong> <button class="btn small">Send</button>';
+      d.querySelector('button').addEventListener('click', ()=>{ alertx('Simulated send from '+x.name+' — confirmed +5 XP'); earn(5); });
+      w.appendChild(d);
+    });
+  }
+  renderWallets();
+  function startWorld1(){
+    const g=document.getElementById('game');
+    g.innerHTML='';
+    const d=document.createElement('div'); d.className='term';
+    d.innerHTML='<strong>World 1: Crypto Origins</strong><div class=small>Drag eras into order: Barter → Gold → Fiat → Digital → Bitcoin</div><button id="checkOrder" class="btn small">Check Order</button>';
+    g.appendChild(d);
+    document.getElementById('checkOrder').addEventListener('click', ()=>earn(30));
+  }
+});
 </script>
 </body>
 </html>
