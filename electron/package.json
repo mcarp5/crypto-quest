@@ -1,0 +1,44 @@
+{
+  "name": "crypto-quest",
+  "version": "1.0.0",
+  "description": "Crypto Quest \u2014 Desktop (Mac)",
+  "main": "main.js",
+  "author": "Matt Carpenter",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --mac dmg"
+  },
+  "build": {
+    "appId": "com.mattcarpenter.cryptoquest",
+    "productName": "Crypto Quest",
+    "files": [
+      "app/**/*",
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      "entitlements.mac.plist",
+      "scripts/notarize.js"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.education",
+      "icon": "assets/icon-512.png",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
+    },
+    "dmg": {
+      "artifactName": "CryptoQuest-${version}-mac.dmg"
+    },
+    "afterSign": "scripts/notarize.js"
+  },
+  "devDependencies": {
+    "electron": "30.0.9",
+    "electron-builder": "24.13.3",
+    "@electron/notarize": "2.3.0"
+  },
+  "dependencies": {}
+}
